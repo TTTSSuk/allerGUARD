@@ -1,19 +1,17 @@
-# allergen_db.py
-
 ALLERGEN_DB = {
-    "Salicylic Acid": {
-        "type": "BHA",
-        "level": "medium",
-        "risk": "May cause irritation for sensitive or acne-prone skin"
+    "salicylate": {
+        "keywords": ["salicylic acid", "salicylate"],
+        "risk": "High",
+        "description": "May cause allergic reactions in people sensitive to salicylates."
     },
-    "Phenoxyethanol": {
-        "type": "Preservative",
-        "level": "medium",
-        "risk": "May cause allergic reaction in sensitive skin"
-    },
-    "Melaleuca Alternifolio (Tea tree) Extract": {
-        "type": "Essential Oil",
-        "level": "low",
-        "risk": "Can irritate sensitive skin"
+
+    "ascorbic acid": {
+        "keywords": [
+            "ascorbic acid",
+            "vitamin c",
+            "l-ascorbic acid"
+        ],
+        "risk": "Medium",
+        "description": "Ascorbic Acid (Vitamin C) may cause irritation or allergic reactions in sensitive individuals."
     }
 }

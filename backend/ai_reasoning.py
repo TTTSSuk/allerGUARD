@@ -1,59 +1,43 @@
 import subprocess
+import json
 
-def analyze_with_ai(ocr_text, user_allergies):
+def analyze_ingredients(normalized_ingredients, user_allergies):
     prompt = f"""
-คุณเป็นผู้เชี่ยวชาญด้านส่วนผสมในเครื่องสำอางและการแพ้สารเคมี
+You are an expert in cosmetic ingredient allergy analysis.
 
-ข้อมูลฉลากสินค้า:
-{ocr_text}
+Normalized ingredients (JSON):
+{json.dumps(normalized_ingredients, ensure_ascii=False)}
 
-สิ่งที่ผู้ใช้แพ้:
+User allergies:
 {", ".join(user_allergies)}
 
-งานของคุณ:
-1. ระบุส่วนผสมที่พบ
-2. วิเคราะห์ว่าส่วนผสมใดเกี่ยวข้องกับสิ่งที่ผู้ใช้แพ้
-3. อธิบายเหตุผล
-4. ประเมินระดับความเสี่ยง (ต่ำ / ปานกลาง / สูง)
+Task:
+- Identify risky ingredients
+- Explain why
+- Assign risk level
 
-ตอบกลับเป็นโครงสร้างนี้เท่านั้น:
-
-Ingredients Detected:
-- ...
-
-Risky Ingredients:
-- Name:
-  Reason:
-  Risk Level:
-
-Overall Summary:
-- ...
+Return JSON ONLY:
+{{
+  "risky_ingredients": [
+    {{
+      "name": "",
+      "reason": "",
+      "risk_level": "Low | Medium | High"
+    }}
+  ],
+  "summary": ""
+}}
 """
 
     result = subprocess.run(
-        [
-            "ollama",
-            "run",
-            "scb10x/llama3.1-typhoon2-8b-instruct"
-        ],
+        ["ollama", "run", "scb10x/llama3.1-typhoon2-8b-instruct"],
         input=prompt,
         text=True,
         capture_output=True,
         encoding="utf-8"
     )
 
-    return result.stdout
+    output = result.stdout.strip()
+    output = output[:output.rfind("}")+1]
 
-
-if __name__ == "__main__":
-    # 🔹 ตัวอย่างข้อมูล (ของจริงจะมาจาก OCR)
-    ocr_text = """
-    Ingredients: Water, Salicylic Acid, Glycerin, Phenoxyethanol
-    """
-
-    user_allergies = ["Salicylate"]
-
-    ai_result = analyze_with_ai(ocr_text, user_allergies)
-
-    print("===== AI ANALYSIS RESULT =====")
-    print(ai_result)
+    return json.loads(output)
