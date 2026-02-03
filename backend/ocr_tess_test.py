@@ -31,7 +31,7 @@ def ocr_image(image_path):
 
 
 if __name__ == "__main__":
-    img = r"D:\allerGUARD\sample_images\label.jpg"
+    img = r"D:\allerGUARD\sample_images\label2.jpg"
     text = ocr_image(img)
 
     print("===== OCR RESULT =====\n")
