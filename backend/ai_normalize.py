@@ -3,7 +3,7 @@ import json
 
 def normalize_ingredients(ingredient_list):
     # ถ้ามีสารเยอะมาก (>20) ให้ข้ามเพื่อความเร็ว
-    if len(ingredient_list) > 20:
+    if len(ingredient_list) > 50:
         print("⚠️ สารมีจำนวนมาก - ข้าม normalize")
         return [
             {
@@ -47,7 +47,7 @@ Output: {{"original": "Salicylic 0id", "corrected": "Salicylic Acid", "confidenc
 ]
 """
 
-    print("⏳ รอ AI normalize... (30 วินาที)")
+    print("⏳ รอ AI normalize... )")
     
     try:
         result = subprocess.run(
