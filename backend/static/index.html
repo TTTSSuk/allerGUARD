@@ -3,305 +3,1129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AllerGUARD – AI Label Checker</title>
+    <title>AllerGUARD – ผู้ช่วยตรวจสอบส่วนผสมด้วย AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary: #3498db;
-            --secondary: #2c3e50;
-            --success: #27ae60;
-            --danger: #e74c3c;
-            --warning: #f39c12;
-            --bg: #f8f9fa;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg);
-            color: var(--secondary);
-            line-height: 1.6;
+        * {
             margin: 0;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 900px;
-            margin: auto;
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-        }
-
-        h1 {
-            text-align: center;
-            color: var(--secondary);
-            margin-bottom: 30px;
-            font-size: 2.5rem;
-        }
-
-        .upload-section {
-            background: #f1f7ff;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-        }
-
-        label {
-            font-weight: bold;
-            display: block;
-            margin-top: 15px;
-        }
-
-        input[type="file"], input[type="text"] {
-            width: 100%;
-            margin-top: 8px;
-            margin-bottom: 16px;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
+            padding: 0;
             box-sizing: border-box;
         }
 
-        button {
-            background-color: var(--primary);
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg-light: #f8fafc;
+            --bg-dark: #0f172a;
+            --text-dark: #1e293b;
+            --text-light: #64748b;
+            --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        body {
+            font-family: 'Kanit', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text-dark);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.8s ease;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+            background: white;
+            padding: 20px 40px;
+            border-radius: 30px;
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 20px;
+        }
+
+        .logo-icon {
+            font-size: 48px;
+            animation: pulse 2s infinite;
+        }
+
+        .logo h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+        }
+
+        .tagline {
             color: white;
-            border: none;
-            padding: 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 18px;
-            font-weight: bold;
-            transition: background 0.3s;
+            font-size: 1.1rem;
+            font-weight: 300;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
-        button:hover {
-            background-color: #2980b9;
-        }
-
-        button:disabled {
-            background-color: #bdc3c7;
-        }
-
-        /* Result Sections */
-        .result-container {
-            margin-top: 30px;
+        /* Main Content */
+        .main-content {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            gap: 30px;
+            margin-bottom: 30px;
         }
 
-        @media (max-width: 768px) {
-            .result-container { grid-template-columns: 1fr; }
+        @media (max-width: 968px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
         }
 
-        .card {
-            border: 1px solid #eee;
-            border-radius: 10px;
-            padding: 20px;
-            background: #fff;
+        /* Upload Card */
+        .upload-card {
+            background: white;
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: var(--shadow-lg);
+            animation: fadeInLeft 0.8s ease;
         }
 
-        .card h2 {
-            margin-top: 0;
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .upload-zone {
+            border: 3px dashed var(--primary);
+            border-radius: 16px;
+            padding: 40px 20px;
+            text-align: center;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--primary-dark);
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            transform: translateY(-2px);
+        }
+
+        .upload-zone.dragover {
+            background: linear-gradient(135deg, #bfdbfe 0%, #93c5fd 100%);
+            border-color: var(--secondary);
+        }
+
+        .upload-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            animation: bounce 2s infinite;
+        }
+
+        .upload-text {
+            font-size: 1.1rem;
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+
+        .upload-subtext {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-top: 8px;
+        }
+
+        #imageInput {
+            display: none;
+        }
+
+        .preview-container {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .preview-image {
+            width: 100%;
+            max-height: 300px;
+            object-fit: contain;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+        }
+
+        .remove-image {
+            margin-top: 12px;
+            padding: 8px 16px;
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Kanit', sans-serif;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .remove-image:hover {
+            background: #dc2626;
+            transform: scale(1.05);
+        }
+
+        /* Allergy Input */
+        .allergy-input-group {
+            margin-top: 24px;
+        }
+
+        .input-label {
+            display: block;
+            font-weight: 500;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        .allergy-input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-family: 'Kanit', sans-serif;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .allergy-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .input-hint {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-top: 6px;
+        }
+
+        /* Analyze Button */
+        .analyze-button {
+            width: 100%;
+            margin-top: 24px;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Kanit', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .analyze-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(99, 102, 241, 0.4);
+        }
+
+        .analyze-button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .analyze-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .button-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        /* Info Card */
+        .info-card {
+            background: white;
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: var(--shadow-lg);
+            animation: fadeInRight 0.8s ease;
+        }
+
+        .feature-list {
+            list-style: none;
+            margin-top: 20px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: start;
+            gap: 12px;
+            padding: 16px;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .feature-item:hover {
+            transform: translateX(5px);
+            box-shadow: var(--shadow);
+        }
+
+        .feature-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .feature-text {
+            flex: 1;
+        }
+
+        .feature-title {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 4px;
+        }
+
+        .feature-desc {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            line-height: 1.5;
+        }
+
+        /* Loading */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-content {
+            text-align: center;
+            color: white;
+        }
+
+        .spinner {
+            width: 80px;
+            height: 80px;
+            border: 6px solid rgba(255, 255, 255, 0.2);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        .loading-text {
             font-size: 1.2rem;
-            border-bottom: 2px solid var(--primary);
-            padding-bottom: 10px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .loading-subtext {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        /* Results Section */
+        .results-section {
+            display: none;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        .results-section.active {
+            display: block;
+        }
+
+        /* Alert Banner */
+        .alert-banner {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow-lg);
+            text-align: center;
+        }
+
+        .alert-banner.safe {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            border: 3px solid var(--success);
+        }
+
+        .alert-banner.danger {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            border: 3px solid var(--danger);
+        }
+
+        .alert-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .alert-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .alert-banner.safe .alert-title {
+            color: var(--success);
+        }
+
+        .alert-banner.danger .alert-title {
+            color: var(--danger);
+        }
+
+        .alert-message {
+            font-size: 1.1rem;
+            color: var(--text-dark);
+        }
+
+        /* Results Grid */
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 968px) {
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .result-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .result-card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        .result-card-icon {
+            font-size: 32px;
+        }
+
+        .result-card-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-dark);
         }
 
         /* Ingredient Tags */
-        .ingredient-list {
+        .ingredient-tags {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
-            list-style: none;
-            padding: 0;
+            gap: 10px;
         }
 
         .ingredient-tag {
-            background: #edf2f7;
-            padding: 5px 12px;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            padding: 10px 18px;
             border-radius: 20px;
-            font-size: 0.9rem;
-            border: 1px solid #cbd5e0;
+            font-size: 0.95rem;
+            color: var(--text-dark);
+            border: 2px solid #bfdbfe;
+            transition: all 0.3s ease;
+            animation: fadeIn 0.5s ease;
         }
 
-        /* Risk Cards */
+        .ingredient-tag:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+            border-color: var(--primary);
+        }
+
+        /* Risk Items */
+        .risk-items {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
         .risk-item {
-            border-left: 5px solid var(--danger);
-            background: #fff5f5;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 5px;
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            border-left: 5px solid;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            animation: slideInRight 0.5s ease;
         }
 
-        .risk-item.Medium { border-left-color: var(--warning); background: #fffaf0; }
-        .risk-item.Low { border-left-color: var(--primary); background: #ebf8ff; }
+        .risk-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .risk-item.high {
+            border-left-color: var(--danger);
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+        }
+
+        .risk-item.medium {
+            border-left-color: var(--warning);
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+        }
+
+        .risk-item.low {
+            border-left-color: var(--primary);
+            background: linear-gradient(135deg, #f0f9ff 0%, #dbeafe 100%);
+        }
 
         .risk-header {
             display: flex;
             justify-content: space-between;
-            font-weight: bold;
+            align-items: start;
+            margin-bottom: 12px;
         }
 
-        .badge {
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 0.75rem;
+        .risk-name {
+            flex: 1;
+        }
+
+        .risk-name-en {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 4px;
+        }
+
+        .risk-name-th {
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        .risk-badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
             color: white;
         }
 
-        .badge.High { background: var(--danger); }
-        .badge.Medium { background: var(--warning); }
-        .badge.Low { background: var(--primary); }
+        .risk-badge.high {
+            background: var(--danger);
+        }
 
-        .summary-box {
-            grid-column: 1 / -1;
-            padding: 20px;
+        .risk-badge.medium {
+            background: var(--warning);
+        }
+
+        .risk-badge.low {
+            background: var(--primary);
+        }
+
+        .risk-reason {
+            background: rgba(255, 255, 255, 0.7);
+            padding: 14px;
             border-radius: 10px;
+            margin-bottom: 10px;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        .risk-reason-title {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .risk-precaution {
+            background: rgba(255, 255, 255, 0.5);
+            padding: 14px;
+            border-radius: 10px;
+            border-left: 3px solid var(--warning);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .precaution-title {
+            font-weight: 600;
+            color: var(--warning);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* AI Summary */
+        .ai-summary {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: var(--shadow-lg);
+            border: 3px solid #e0e7ff;
+        }
+
+        .ai-summary-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .ai-icon {
+            font-size: 32px;
+        }
+
+        .ai-summary-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .ai-summary-content {
+            font-size: 1.05rem;
+            line-height: 1.8;
+            color: var(--text-dark);
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        /* Empty State */
+        .empty-state {
             text-align: center;
-            font-weight: bold;
+            padding: 60px 20px;
+            color: var(--text-light);
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-text {
             font-size: 1.1rem;
         }
 
-        .safe { background: #e8f5e9; color: var(--success); border: 1px solid var(--success); }
-        .unsafe { background: #ffebee; color: var(--danger); border: 1px solid var(--danger); }
+        /* Animations */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
 
-        #loading { display: none; text-align: center; margin: 20px 0; }
+        @keyframes fadeInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        /* New Scan Button */
+        .new-scan-button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Kanit', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .new-scan-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>AllerGUARD 🧪</h1>
-    
-    <div class="upload-section">
-        <p>อัปโหลดรูปฉลากสินค้าเพื่อให้ AI วิเคราะห์สารที่อาจก่อให้เกิดอาการแพ้</p>
-        
-        <label>📸 อัปโหลดรูปฉลากสินค้า</label>
-        <input type="file" id="imageInput" accept="image/*">
-
-        <label>⚠️ สิ่งที่คุณแพ้ (เช่น salicylate, fragrance)</label>
-        <input type="text" id="allergiesInput" placeholder="ระบุสารที่ต้องการเลี่ยง คั่นด้วยเครื่องหมายจุลภาค (,)">
-
-        <button id="analyzeBtn" onclick="analyze()" style="width: 100%;">วิเคราะห์ฉลากเดี๋ยวนี้</button>
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">
+            <div class="logo-icon">🧪</div>
+            <h1>AllerGUARD</h1>
+        </div>
+        <p class="tagline">ผู้ช่วยตรวจสอบส่วนผสมในเครื่องสำอางด้วย AI – ปลอดภัยสำหรับทุกผิว</p>
     </div>
 
-    <div id="loading">⏳ กำลังประมวลผลด้วย AI กรุณารอสักครู่...</div>
+    <div class="container">
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Upload Card -->
+            <div class="upload-card">
+                <h2 class="card-title">
+                    <span>📸</span>
+                    อัปโหลดรูปฉลากสินค้า
+                </h2>
 
-    <div id="resultArea" style="display: none;">
-        <div id="summaryResult" class="summary-box"></div>
+                <div class="upload-zone" id="uploadZone">
+                    <div class="upload-icon">📤</div>
+                    <div class="upload-text">คลิกหรือลากรูปมาวางที่นี่</div>
+                    <div class="upload-subtext">รองรับไฟล์ JPG, PNG (ขนาดไม่เกิน 10MB)</div>
+                    <input type="file" id="imageInput" accept="image/*">
+                </div>
 
-        <div class="result-container">
-            <div class="card">
-                <h2>🧪 ส่วนผสมที่ตรวจพบ</h2>
-                <div id="ingredientList" class="ingredient-list"></div>
+                <div class="preview-container" id="previewContainer">
+                    <img id="previewImage" class="preview-image" alt="Preview">
+                    <button class="remove-image" id="removeImage">❌ ลบรูป</button>
+                </div>
+
+                <div class="allergy-input-group">
+                    <label class="input-label">⚠️ สารที่คุณแพ้หรือต้องการหลีกเลี่ยง</label>
+                    <input 
+                        type="text" 
+                        id="allergiesInput" 
+                        class="allergy-input"
+                        placeholder="เช่น salicylate, fragrance, alcohol, paraben"
+                    >
+                    <div class="input-hint">💡 คั่นแต่ละสารด้วยเครื่องหมายจุลภาค (,)</div>
+                </div>
+
+                <button class="analyze-button" id="analyzeButton">
+                    <div class="button-content">
+                        <span>🔍</span>
+                        <span>วิเคราะห์ฉลากเดี๋ยวนี้</span>
+                    </div>
+                </button>
             </div>
 
-            <div class="card">
-                <h2>🚫 สารที่ควรระวัง</h2>
-                <div id="analysisResult"></div>
+            <!-- Info Card -->
+            <div class="info-card">
+                <h2 class="card-title">
+                    <span>✨</span>
+                    คุณสมบัติเด่น
+                </h2>
+
+                <ul class="feature-list">
+                    <li class="feature-item">
+                        <div class="feature-icon">🤖</div>
+                        <div class="feature-text">
+                            <div class="feature-title">AI วิเคราะห์อัจฉริยะ</div>
+                            <div class="feature-desc">ใช้เทคโนโลยี AI ตรวจสอบส่วนผสมและวิเคราะห์ความเสี่ยงอัตโนมัติ</div>
+                        </div>
+                    </li>
+                    <li class="feature-item">
+                        <div class="feature-icon">🎯</div>
+                        <div class="feature-text">
+                            <div class="feature-title">แม่นยำสูง</div>
+                            <div class="feature-desc">อ่านฉลากด้วย OCR ความแม่นยำสูง พร้อมแก้ไขข้อผิดพลาดอัตโนมัติ</div>
+                        </div>
+                    </li>
+                    <li class="feature-item">
+                        <div class="feature-icon">💬</div>
+                        <div class="feature-text">
+                            <div class="feature-title">คำแนะนำภาษาไทย</div>
+                            <div class="feature-desc">ให้คำอธิบายและข้อควรระวังเป็นภาษาไทยที่เข้าใจง่าย</div>
+                        </div>
+                    </li>
+                    <li class="feature-item">
+                        <div class="feature-icon">⚡</div>
+                        <div class="feature-text">
+                            <div class="feature-title">รวดเร็ว</div>
+                            <div class="feature-desc">ผลลัพธ์ออกมาภายใน 10-30 วินาที</div>
+                        </div>
+                    </li>
+                    <li class="feature-item">
+                        <div class="feature-icon">🔒</div>
+                        <div class="feature-text">
+                            <div class="feature-title">ปลอดภัย</div>
+                            <div class="feature-desc">ประมวลผลบนเครื่องของคุณ ข้อมูลไม่ถูกเก็บหรือส่งออกนอกระบบ</div>
+                        </div>
+                    </li>
+                </ul>
             </div>
         </div>
+
+        <!-- Results Section -->
+        <div class="results-section" id="resultsSection">
+            <!-- Alert Banner -->
+            <div class="alert-banner" id="alertBanner">
+                <div class="alert-icon" id="alertIcon"></div>
+                <div class="alert-title" id="alertTitle"></div>
+                <div class="alert-message" id="alertMessage"></div>
+            </div>
+
+            <!-- Results Grid -->
+            <div class="results-grid">
+                <!-- Ingredients Card -->
+                <div class="result-card">
+                    <div class="result-card-header">
+                        <div class="result-card-icon">🧪</div>
+                        <div class="result-card-title">ส่วนผสมที่ตรวจพบ</div>
+                    </div>
+                    <div class="ingredient-tags" id="ingredientTags"></div>
+                </div>
+
+                <!-- Risk Items Card -->
+                <div class="result-card">
+                    <div class="result-card-header">
+                        <div class="result-card-icon">🚫</div>
+                        <div class="result-card-title">สารที่ควรระวัง</div>
+                    </div>
+                    <div class="risk-items" id="riskItems"></div>
+                </div>
+            </div>
+
+            <!-- AI Summary -->
+            <div class="ai-summary" id="aiSummary">
+                <div class="ai-summary-header">
+                    <div class="ai-icon">🤖</div>
+                    <div class="ai-summary-title">สรุปจาก AI</div>
+                </div>
+                <div class="ai-summary-content" id="aiSummaryContent"></div>
+            </div>
+
+            <button class="new-scan-button" id="newScanButton">
+                🔄 สแกนฉลากใหม่
+            </button>
+        </div>
     </div>
-</div>
 
-<script>
-async function analyze() {
-    const fileInput = document.getElementById("imageInput");
-    const allergiesInput = document.getElementById("allergiesInput");
-    const analyzeBtn = document.getElementById("analyzeBtn");
-    const loading = document.getElementById("loading");
-    const resultArea = document.getElementById("resultArea");
-    
-    const ingredientList = document.getElementById("ingredientList");
-    const analysisResult = document.getElementById("analysisResult");
-    const summaryResult = document.getElementById("summaryResult");
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <div class="loading-text">กำลังวิเคราะห์ด้วย AI</div>
+            <div class="loading-subtext">กรุณารอสักครู่...</div>
+        </div>
+    </div>
 
-    if (!fileInput.files.length) {
-        alert("กรุณาอัปโหลดรูปภาพ");
-        return;
-    }
+    <script>
+        const uploadZone = document.getElementById('uploadZone');
+        const imageInput = document.getElementById('imageInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const previewImage = document.getElementById('previewImage');
+        const removeImage = document.getElementById('removeImage');
+        const allergiesInput = document.getElementById('allergiesInput');
+        const analyzeButton = document.getElementById('analyzeButton');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const resultsSection = document.getElementById('resultsSection');
+        const newScanButton = document.getElementById('newScanButton');
 
-    // ล้างข้อมูลเก่า
-    ingredientList.innerHTML = "";
-    analysisResult.innerHTML = "";
-    resultArea.style.display = "none";
-    loading.style.display = "block";
-    analyzeBtn.disabled = true;
+        let selectedFile = null;
 
-    const allergies = allergiesInput.value
-        .split(",")
-        .map(a => a.trim().toLowerCase())
-        .filter(a => a.length > 0);
-
-    const formData = new FormData();
-    formData.append("file", fileInput.files[0]);
-    formData.append("allergies", JSON.stringify(allergies));
-
-    try {
-        const response = await fetch("/analyze-label", {
-            method: "POST",
-            body: formData
+        // Upload Zone Click
+        uploadZone.addEventListener('click', () => {
+            imageInput.click();
         });
 
-        const data = await response.json();
-        loading.style.display = "none";
-        resultArea.style.display = "block";
-
-        if (data.error) {
-            summaryResult.className = "summary-box unsafe";
-            summaryResult.innerHTML = `❌ เกิดข้อผิดพลาด: ${data.error}`;
-            return;
-        }
-
-        // 1️⃣ แสดงส่วนผสมเป็น Tag สวยๆ
-        data.ingredients.forEach(item => {
-            const span = document.createElement("span");
-            span.className = "ingredient-tag";
-            span.textContent = item.corrected;
-            ingredientList.appendChild(span);
+        // Drag and Drop
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
         });
 
-        // 2️⃣ วิเคราะห์การแพ้
-        const risky = data.analysis.risky_ingredients;
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
 
-        if (!risky || risky.length === 0) {
-            summaryResult.className = "summary-box safe";
-            summaryResult.innerHTML = "✅ ปลอดภัย! ไม่พบสารที่คุณแพ้ในผลิตภัณฑ์นี้";
-            analysisResult.innerHTML = "<p style='text-align:center; color:#666;'>ยินดีด้วย! เราไม่พบสารอันตรายสำหรับคุณ</p>";
-        } else {
-            summaryResult.className = "summary-box unsafe";
-            summaryResult.innerHTML = `⚠️ พบสารที่ควรหลีกเลี่ยง ${risky.length} รายการ`;
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
 
-            risky.forEach(r => {
-                const riskCard = document.createElement("div");
-                riskCard.className = `risk-item ${r.risk_level}`;
-                riskCard.innerHTML = `
-                    <div class="risk-header">
-                        <span>${r.name}</span>
-                        <span class="badge ${r.risk_level}">${r.risk_level}</span>
-                    </div>
-                    <div style="font-size: 0.85rem; margin-top: 5px; color: #555;">
-                        <b>เหตุผล:</b> ${r.reason}
-                    </div>
-                `;
-                analysisResult.appendChild(riskCard);
-            });
-            
-            const summaryText = document.createElement("p");
-            summaryText.innerHTML = `<br><b>บทสรุปจาก AI:</b><br>${data.analysis.summary}`;
-            analysisResult.appendChild(summaryText);
+        // File Input Change
+        imageInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        // Handle File
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('กรุณาเลือกไฟล์รูปภาพเท่านั้น');
+                return;
+            }
+
+            if (file.size > 10 * 1024 * 1024) {
+                alert('ขนาดไฟล์ต้องไม่เกิน 10MB');
+                return;
+            }
+
+            selectedFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImage.src = e.target.result;
+                previewContainer.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
         }
 
-    } catch (err) {
-        loading.style.display = "none";
-        summaryResult.className = "summary-box unsafe";
-        summaryResult.innerHTML = `❌ เกิดข้อผิดพลาดทางระบบ: ${err}`;
-    } finally {
-        analyzeBtn.disabled = false;
-    }
-}
-</script>
+        // Remove Image
+        removeImage.addEventListener('click', (e) => {
+            e.stopPropagation();
+            selectedFile = null;
+            imageInput.value = '';
+            previewContainer.style.display = 'none';
+        });
+
+        // Analyze Button
+        analyzeButton.addEventListener('click', async () => {
+            if (!selectedFile) {
+                alert('กรุณาอัปโหลดรูปภาพก่อน');
+                return;
+            }
+
+            const allergies = allergiesInput.value
+                .split(',')
+                .map(a => a.trim().toLowerCase())
+                .filter(a => a.length > 0);
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            formData.append('allergies', JSON.stringify(allergies));
+
+            // Show loading
+            loadingOverlay.classList.add('active');
+            analyzeButton.disabled = true;
+
+            try {
+                const response = await fetch('/analyze-label', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                displayResults(data);
+            } catch (error) {
+                console.error('Error:', error);
+                alert('เกิดข้อผิดพลาด: ' + error.message);
+            } finally {
+                loadingOverlay.classList.remove('active');
+                analyzeButton.disabled = false;
+            }
+        });
+
+        // Display Results
+        function displayResults(data) {
+            if (data.error) {
+                alert('เกิดข้อผิดพลาด: ' + data.error);
+                return;
+            }
+
+            const risky = data.analysis.risky_ingredients || [];
+            const isSafe = risky.length === 0;
+
+            // Alert Banner
+            const alertBanner = document.getElementById('alertBanner');
+            const alertIcon = document.getElementById('alertIcon');
+            const alertTitle = document.getElementById('alertTitle');
+            const alertMessage = document.getElementById('alertMessage');
+
+            if (isSafe) {
+                alertBanner.className = 'alert-banner safe';
+                alertIcon.textContent = '✅';
+                alertTitle.textContent = 'ปลอดภัย!';
+                alertMessage.textContent = 'ไม่พบสารที่คุณแพ้ในผลิตภัณฑ์นี้';
+            } else {
+                alertBanner.className = 'alert-banner danger';
+                alertIcon.textContent = '⚠️';
+                alertTitle.textContent = `พบสารที่ควรระวัง ${risky.length} รายการ`;
+                alertMessage.textContent = 'พบสารที่อาจทำให้คุณแพ้ กรุณาตรวจสอบรายละเอียด';
+            }
+
+            // Ingredients
+            const ingredientTags = document.getElementById('ingredientTags');
+            ingredientTags.innerHTML = '';
+
+            if (data.ingredients && data.ingredients.length > 0) {
+                data.ingredients.forEach((item, index) => {
+                    const tag = document.createElement('div');
+                    tag.className = 'ingredient-tag';
+                    tag.textContent = item.corrected || item.original;
+                    tag.style.animationDelay = `${index * 0.05}s`;
+                    ingredientTags.appendChild(tag);
+                });
+            } else {
+                ingredientTags.innerHTML = '<div class="empty-state"><div class="empty-icon">📦</div><div class="empty-text">ไม่พบส่วนผสม</div></div>';
+            }
+
+            // Risk Items
+            const riskItems = document.getElementById('riskItems');
+            riskItems.innerHTML = '';
+
+            if (risky.length > 0) {
+                risky.forEach((risk, index) => {
+                    const riskLevel = risk.risk_level.toLowerCase() === 'สูง' ? 'high' :
+                                    risk.risk_level.toLowerCase() === 'กลาง' ? 'medium' : 'low';
+                    
+                    const item = document.createElement('div');
+                    item.className = `risk-item ${riskLevel}`;
+                    item.style.animationDelay = `${index * 0.1}s`;
+                    
+                    item.innerHTML = `
+                        <div class="risk-header">
+                            <div class="risk-name">
+                                <div class="risk-name-en">${risk.name}</div>
+                                ${risk.name_th ? `<div class="risk-name-th">${risk.name_th}</div>` : ''}
+                            </div>
+                            <div class="risk-badge ${riskLevel}">${risk.risk_level}</div>
+                        </div>
+                        <div class="risk-reason">
+                            <div class="risk-reason-title">🔍 เหตุผล</div>
+                            ${risk.reason}
+                        </div>
+                        ${risk.precaution ? `
+                        <div class="risk-precaution">
+                            <div class="precaution-title">⚠️ ข้อควรระวัง</div>
+                            ${risk.precaution}
+                        </div>
+                        ` : ''}
+                    `;
+                    
+                    riskItems.appendChild(item);
+                });
+            } else {
+                riskItems.innerHTML = '<div class="empty-state"><div class="empty-icon">🎉</div><div class="empty-text">ยินดีด้วย! ไม่พบสารอันตรายสำหรับคุณ</div></div>';
+            }
+
+            // AI Summary
+            const aiSummaryContent = document.getElementById('aiSummaryContent');
+            aiSummaryContent.textContent = data.analysis.summary || 'ไม่มีข้อมูลสรุป';
+
+            // Show results
+            resultsSection.classList.add('active');
+            resultsSection.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // New Scan Button
+        newScanButton.addEventListener('click', () => {
+            resultsSection.classList.remove('active');
+            selectedFile = null;
+            imageInput.value = '';
+            previewContainer.style.display = 'none';
+            allergiesInput.value = '';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    </script>
 
 </body>
 </html>
