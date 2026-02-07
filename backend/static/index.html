@@ -2,183 +2,232 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AllerGUARD – AI Label Checker</title>
     <style>
+        :root {
+            --primary: #3498db;
+            --secondary: #2c3e50;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --bg: #f8f9fa;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: auto;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--secondary);
+            line-height: 1.6;
+            margin: 0;
             padding: 20px;
         }
-        h1 {
-            color: #2c3e50;
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
         }
+
+        h1 {
+            text-align: center;
+            color: var(--secondary);
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+        }
+
+        .upload-section {
+            background: #f1f7ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
         label {
             font-weight: bold;
             display: block;
             margin-top: 15px;
         }
-        input, textarea, button {
+
+        input[type="file"], input[type="text"] {
             width: 100%;
             margin-top: 8px;
             margin-bottom: 16px;
-            padding: 10px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
             box-sizing: border-box;
         }
+
         button {
-            background-color: #3498db;
+            background-color: var(--primary);
             color: white;
             border: none;
+            padding: 15px;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 18px;
+            font-weight: bold;
+            transition: background 0.3s;
         }
+
         button:hover {
             background-color: #2980b9;
         }
+
         button:disabled {
-            background-color: #95a5a6;
-            cursor: not-allowed;
+            background-color: #bdc3c7;
         }
-        pre {
-            background: #f4f4f4;
+
+        /* Result Sections */
+        .result-container {
+            margin-top: 30px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .result-container { grid-template-columns: 1fr; }
+        }
+
+        .card {
+            border: 1px solid #eee;
+            border-radius: 10px;
+            padding: 20px;
+            background: #fff;
+        }
+
+        .card h2 {
+            margin-top: 0;
+            font-size: 1.2rem;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+        }
+
+        /* Ingredient Tags */
+        .ingredient-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            list-style: none;
+            padding: 0;
+        }
+
+        .ingredient-tag {
+            background: #edf2f7;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            border: 1px solid #cbd5e0;
+        }
+
+        /* Risk Cards */
+        .risk-item {
+            border-left: 5px solid var(--danger);
+            background: #fff5f5;
             padding: 15px;
-            white-space: pre-wrap;
-            border-radius: 5px;
-            max-height: 500px;
-            overflow-y: auto;
-        }
-        .status {
-            padding: 10px;
-            margin: 10px 0;
+            margin-bottom: 10px;
             border-radius: 5px;
         }
-        .status.info {
-            background-color: #e3f2fd;
-            color: #1976d2;
+
+        .risk-item.Medium { border-left-color: var(--warning); background: #fffaf0; }
+        .risk-item.Low { border-left-color: var(--primary); background: #ebf8ff; }
+
+        .risk-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
         }
-        .status.success {
-            background-color: #e8f5e9;
-            color: #388e3c;
+
+        .badge {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            color: white;
         }
-        .status.error {
-            background-color: #ffebee;
-            color: #c62828;
+
+        .badge.High { background: var(--danger); }
+        .badge.Medium { background: var(--warning); }
+        .badge.Low { background: var(--primary); }
+
+        .summary-box {
+            grid-column: 1 / -1;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1rem;
         }
+
+        .safe { background: #e8f5e9; color: var(--success); border: 1px solid var(--success); }
+        .unsafe { background: #ffebee; color: var(--danger); border: 1px solid var(--danger); }
+
+        #loading { display: none; text-align: center; margin: 20px 0; }
     </style>
 </head>
 <body>
 
-<h1>AllerGUARD 🧪</h1>
-<p>อัปโหลดรูปฉลากสินค้า ระบบจะใช้ AI วิเคราะห์ว่าสารใดอาจก่อให้เกิดอาการแพ้</p>
-
-<label>อัปโหลดรูปฉลากสินค้า</label>
-<input type="file" id="imageInput" accept="image/*">
-
-<label>สิ่งที่คุณแพ้ (คั่นด้วย ,)</label>
-<input type="text" id="allergiesInput" placeholder="เช่น salicylate, fragrance">
-
-<button id="analyzeBtn" onclick="analyze()">วิเคราะห์ฉลาก</button>
-
-<div id="statusBox"></div>
-
-<h2>ผลลัพธ์</h2>
-<pre id="result">ยังไม่มีผลลัพธ์</pre>
-
-<!-- <script>
-function showStatus(message, type = 'info') {
-    const statusBox = document.getElementById('statusBox');
-    statusBox.innerHTML = `<div class="status ${type}">${message}</div>`;
-    console.log(`[${type.toUpperCase()}] ${message}`);
-}
-
-async function analyze() {
-    console.log('🚀 เริ่มฟังก์ชัน analyze()');
+<div class="container">
+    <h1>AllerGUARD 🧪</h1>
     
-    const fileInput = document.getElementById("imageInput");
-    const allergiesInput = document.getElementById("allergiesInput");
-    const resultBox = document.getElementById("result");
-    const analyzeBtn = document.getElementById("analyzeBtn");
-
-    // ตรวจสอบว่าเลือกไฟล์แล้วหรือยัง
-    if (!fileInput.files.length) {
-        console.error('❌ ไม่มีไฟล์');
-        alert("กรุณาอัปโหลดรูปภาพ");
-        return;
-    }
-
-    console.log('📁 ไฟล์ที่เลือก:', fileInput.files[0].name);
-
-    // แปลง allergies เป็น array
-    const allergies = allergiesInput.value
-        .split(",")
-        .map(a => a.trim())
-        .filter(a => a.length > 0);
-
-    console.log('🔴 สารที่แพ้:', allergies);
-
-    // สร้าง FormData
-    const formData = new FormData();
-    formData.append("file", fileInput.files[0]);
-    formData.append("allergies", JSON.stringify(allergies));
-
-    console.log('📦 FormData พร้อมส่ง');
-
-    // แสดงสถานะกำลังโหลด
-    analyzeBtn.disabled = true;
-    resultBox.textContent = "⏳ กำลังวิเคราะห์ด้วย AI ...";
-    showStatus("⏳ กำลังส่งข้อมูลไปยัง AI...", "info");
-
-    try {
-        console.log('🌐 กำลังส่ง POST request ไปที่ /analyze-label');
+    <div class="upload-section">
+        <p>อัปโหลดรูปฉลากสินค้าเพื่อให้ AI วิเคราะห์สารที่อาจก่อให้เกิดอาการแพ้</p>
         
-        const response = await fetch("/analyze-label", {
-            method: "POST",
-            body: formData
-        });
+        <label>📸 อัปโหลดรูปฉลากสินค้า</label>
+        <input type="file" id="imageInput" accept="image/*">
 
-        console.log('📨 ได้รับ response:', response.status, response.statusText);
+        <label>⚠️ สิ่งที่คุณแพ้ (เช่น salicylate, fragrance)</label>
+        <input type="text" id="allergiesInput" placeholder="ระบุสารที่ต้องการเลี่ยง คั่นด้วยเครื่องหมายจุลภาค (,)">
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        <button id="analyzeBtn" onclick="analyze()" style="width: 100%;">วิเคราะห์ฉลากเดี๋ยวนี้</button>
+    </div>
 
-        const data = await response.json();
-        console.log('✅ ได้ข้อมูล JSON:', data);
+    <div id="loading">⏳ กำลังประมวลผลด้วย AI กรุณารอสักครู่...</div>
 
-        resultBox.textContent = JSON.stringify(data, null, 2);
-        showStatus("✅ วิเคราะห์เสร็จสมบูรณ์!", "success");
+    <div id="resultArea" style="display: none;">
+        <div id="summaryResult" class="summary-box"></div>
 
-    } catch (error) {
-        console.error('❌ เกิดข้อผิดพลาด:', error);
-        resultBox.textContent = "❌ เกิดข้อผิดพลาด: " + error.message;
-        showStatus("❌ เกิดข้อผิดพลาด: " + error.message, "error");
-    } finally {
-        analyzeBtn.disabled = false;
-        console.log('🏁 สิ้นสุดฟังก์ชัน analyze()');
-    }
-}
+        <div class="result-container">
+            <div class="card">
+                <h2>🧪 ส่วนผสมที่ตรวจพบ</h2>
+                <div id="ingredientList" class="ingredient-list"></div>
+            </div>
 
-// แสดงสถานะเมื่อโหลดหน้า
-window.onload = function() {
-    console.log('✅ หน้าเว็บโหลดสำเร็จ');
-    showStatus("✅ ระบบพร้อมใช้งาน", "success");
-}
-</script> -->
+            <div class="card">
+                <h2>🚫 สารที่ควรระวัง</h2>
+                <div id="analysisResult"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 async function analyze() {
     const fileInput = document.getElementById("imageInput");
     const allergiesInput = document.getElementById("allergiesInput");
-
+    const analyzeBtn = document.getElementById("analyzeBtn");
+    const loading = document.getElementById("loading");
+    const resultArea = document.getElementById("resultArea");
+    
     const ingredientList = document.getElementById("ingredientList");
     const analysisResult = document.getElementById("analysisResult");
-
-    ingredientList.innerHTML = "";
-    analysisResult.innerHTML = "⏳ กำลังวิเคราะห์ด้วย AI ...";
+    const summaryResult = document.getElementById("summaryResult");
 
     if (!fileInput.files.length) {
         alert("กรุณาอัปโหลดรูปภาพ");
         return;
     }
+
+    // ล้างข้อมูลเก่า
+    ingredientList.innerHTML = "";
+    analysisResult.innerHTML = "";
+    resultArea.style.display = "none";
+    loading.style.display = "block";
+    analyzeBtn.disabled = true;
 
     const allergies = allergiesInput.value
         .split(",")
@@ -196,57 +245,60 @@ async function analyze() {
         });
 
         const data = await response.json();
+        loading.style.display = "none";
+        resultArea.style.display = "block";
 
-        // ❌ ไม่มี ingredient
         if (data.error) {
-            analysisResult.innerHTML = `<p style="color:red;">❌ ${data.error}</p>`;
+            summaryResult.className = "summary-box unsafe";
+            summaryResult.innerHTML = `❌ เกิดข้อผิดพลาด: ${data.error}`;
             return;
         }
 
-        // 1️⃣ แสดงส่วนผสม
+        // 1️⃣ แสดงส่วนผสมเป็น Tag สวยๆ
         data.ingredients.forEach(item => {
-            const li = document.createElement("li");
-            li.textContent = item.corrected;
-            ingredientList.appendChild(li);
+            const span = document.createElement("span");
+            span.className = "ingredient-tag";
+            span.textContent = item.corrected;
+            ingredientList.appendChild(span);
         });
 
         // 2️⃣ วิเคราะห์การแพ้
         const risky = data.analysis.risky_ingredients;
 
         if (!risky || risky.length === 0) {
-            analysisResult.innerHTML = `
-                <p style="color:green; font-weight:bold;">
-                ✅ ไม่พบสารที่คุณแพ้ในผลิตภัณฑ์นี้
-                </p>
-            `;
+            summaryResult.className = "summary-box safe";
+            summaryResult.innerHTML = "✅ ปลอดภัย! ไม่พบสารที่คุณแพ้ในผลิตภัณฑ์นี้";
+            analysisResult.innerHTML = "<p style='text-align:center; color:#666;'>ยินดีด้วย! เราไม่พบสารอันตรายสำหรับคุณ</p>";
         } else {
-            let html = `
-                <p style="color:red; font-weight:bold;">
-                ❌ พบสารที่คุณแพ้ในผลิตภัณฑ์นี้
-                </p>
-                <ul>
-            `;
+            summaryResult.className = "summary-box unsafe";
+            summaryResult.innerHTML = `⚠️ พบสารที่ควรหลีกเลี่ยง ${risky.length} รายการ`;
 
             risky.forEach(r => {
-                html += `
-                    <li>
-                        <b>${r.name}</b> (Risk: ${r.risk_level})<br>
-                        เหตุผล: ${r.reason}
-                    </li>
+                const riskCard = document.createElement("div");
+                riskCard.className = `risk-item ${r.risk_level}`;
+                riskCard.innerHTML = `
+                    <div class="risk-header">
+                        <span>${r.name}</span>
+                        <span class="badge ${r.risk_level}">${r.risk_level}</span>
+                    </div>
+                    <div style="font-size: 0.85rem; margin-top: 5px; color: #555;">
+                        <b>เหตุผล:</b> ${r.reason}
+                    </div>
                 `;
+                analysisResult.appendChild(riskCard);
             });
-
-            html += `
-                </ul>
-                <p><b>สรุป:</b> ${data.analysis.summary}</p>
-            `;
-
-            analysisResult.innerHTML = html;
+            
+            const summaryText = document.createElement("p");
+            summaryText.innerHTML = `<br><b>บทสรุปจาก AI:</b><br>${data.analysis.summary}`;
+            analysisResult.appendChild(summaryText);
         }
 
     } catch (err) {
-        analysisResult.innerHTML =
-            `<p style="color:red;">❌ เกิดข้อผิดพลาด: ${err}</p>`;
+        loading.style.display = "none";
+        summaryResult.className = "summary-box unsafe";
+        summaryResult.innerHTML = `❌ เกิดข้อผิดพลาดทางระบบ: ${err}`;
+    } finally {
+        analyzeBtn.disabled = false;
     }
 }
 </script>
