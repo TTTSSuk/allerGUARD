@@ -1,17 +1,18 @@
 ALLERGEN_DB = {
-    "salicylate": {
-        "keywords": ["salicylic acid", "salicylate"],
-        "risk": "High",
-        "description": "May cause allergic reactions in people sensitive to salicylates."
+    "Salicylic Acid": {
+        "type": "BHA",
+        "level": "medium",
+        "risk": "อาจระคายเคืองผิวแพ้ง่าย"
     },
-
-    "ascorbic acid": {
-        "keywords": [
-            "ascorbic acid",
-            "vitamin c",
-            "l-ascorbic acid"
-        ],
-        "risk": "Medium",
-        "description": "Ascorbic Acid (Vitamin C) may cause irritation or allergic reactions in sensitive individuals."
-    }
+    "Paraben": {
+        "type": "Preservative",
+        "level": "low",
+        "risk": "อาจทำให้แพ้ในผิวบางคน"
+    },
+    "Phenoxyethanol": {
+        "type": "Preservative",
+        "level": "medium",
+        "risk": "อาจทำให้เกิดอาการแพ้ในผิวแพ้ง่าย"
+    },
+    # เพิ่มได้ไม่จำกัด
 }

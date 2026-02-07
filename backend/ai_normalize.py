@@ -2,6 +2,18 @@ import subprocess
 import json
 
 def normalize_ingredients(ingredient_list):
+    # ถ้ามีสารเยอะมาก (>20) ให้ข้ามเพื่อความเร็ว
+    if len(ingredient_list) > 20:
+        print("⚠️ สารมีจำนวนมาก - ข้าม normalize")
+        return [
+            {
+                "original": ing,
+                "corrected": ing,
+                "confidence": "ต่ำ"
+            }
+            for ing in ingredient_list
+        ]
+    
     ingredients_text = "\n".join(ingredient_list)
 
     prompt = f"""
@@ -35,33 +47,35 @@ Output: {{"original": "Salicylic 0id", "corrected": "Salicylic Acid", "confidenc
 ]
 """
 
-    result = subprocess.run(
-        ["ollama", "run", "scb10x/llama3.1-typhoon2-8b-instruct"],
-        input=prompt,
-        text=True,
-        capture_output=True,
-        encoding="utf-8"
-    )
-
-    output = result.stdout.strip()
+    print("⏳ รอ AI normalize... (30 วินาที)")
     
-    # หา JSON array จากผลลัพธ์
     try:
-        # หาตำแหน่ง [ และ ] สุดท้าย
-        start = output.find("[")
-        end = output.rfind("]") + 1
+        result = subprocess.run(
+            ["ollama", "run", "scb10x/llama3.1-typhoon2-8b-instruct"],
+            input=prompt,
+            text=True,
+            capture_output=True,
+            encoding="utf-8",
+            timeout=1800  # เพิ่ม timeout 60 วินาที
+        )
+
+        output = result.stdout.strip()
         
-        if start != -1 and end > start:
-            json_str = output[start:end]
-            return json.loads(json_str)
-        else:
-            # ถ้าหาไม่เจอ ลองตัดทีหลัง
-            output = output[:output.rfind("]")+1]
-            return json.loads(output)
-    except json.JSONDecodeError as e:
-        print(f"❌ Error parsing normalize response: {e}")
-        print(f"Raw output: {output}")
-        
+        # หา JSON array จากผลลัพธ์
+        try:
+            parsed = json.loads(output)
+            print("✅ Normalize สำเร็จ")
+            return parsed
+        except json.JSONDecodeError as e:
+            print(f"❌ AI ตอบไม่เป็น JSON: {e}")
+            print("Raw:", output[:200])
+            raise  # ส่ง error ต่อไป
+            
+    except subprocess.TimeoutExpired:
+        print("❌ AI Normalize timeout")
+        raise
+    except Exception as e:
+        print(f"❌ Normalize error: {e}")
         # Fallback: คืนค่าเดิม
         return [
             {
