@@ -1,294 +1,212 @@
 from ocr_tess_test import ocr_image
 from ingredient_extractor import extract_ingredients
 from ai_normalize import normalize_ingredients
-from ai_reasoning import process_with_ai
-import re
+from ai_reasoning import analyze_each_allergen
+from fuzzy_matcher import find_matching_allergens
 
 def run_pipeline(image_path, user_allergies=None):
+    """
+    Pipeline หลักสำหรับตรวจสอบสารที่แพ้
+    
+    Workflow:
+    1️⃣ OCR อ่านภาพ
+    2️⃣ Normalize รายชื่อสาร (แก้ไข OCR errors)
+    3️⃣ เปรียบเทียบกับสารที่ user แพ้ (ใช้ fuzzy matching)
+    4️⃣ ส่งแต่ละสารที่แพ้ให้ AI วิเคราะห์ระดับความเสี่ยง + คำแนะนำ
+    5️⃣ รวมผลลัพธ์และส่งกลับไปแสดงบนเว็บ
+    """
+    
     if user_allergies is None:
         user_allergies = []
     
-    print("🔵 เริ่มต้น pipeline...")
+    print("\n" + "="*70)
+    print("🚀 เริ่มต้น AllerGUARD Pipeline")
+    print("="*70)
 
-    # 1. OCR + Extract
-    raw_text = ocr_image(image_path)
+    # =========================================================================
+    # 1️⃣ OCR อ่านภาพ
+    # =========================================================================
+    print("\n📸 STEP 1: OCR อ่านภาพ...")
+    try:
+        raw_text = ocr_image(image_path)
+        print(f"✅ OCR สำเร็จ (อ่านได้ {len(raw_text)} ตัวอักษร)")
+    except Exception as e:
+        print(f"❌ OCR ล้มเหลว: {e}")
+        return {
+            "status": "error",
+            "message": f"ไม่สามารถอ่านภาพได้: {str(e)}",
+            "cleaned_ingredients": [],
+            "detected_allergens": [],
+            "recommendation": "กรุณาลองใหม่อีกครั้ง",
+            "ai_analysis": ""
+        }
+    
+    # =========================================================================
+    # 2️⃣ Normalize รายชื่อสาร
+    # =========================================================================
+    print("\n🧹 STEP 2: ดึงและ Normalize ชื่อสาร...")
+    
+    # ดึงส่วนผสมจาก raw text
     ingredients = extract_ingredients(raw_text)
     
     if not ingredients:
+        print("❌ ไม่พบส่วนผสมในฉลาก")
         return {
             "status": "error",
+            "message": "ไม่พบส่วนผสมในฉลาก กรุณาถ่ายภาพให้ชัดขึ้น",
             "cleaned_ingredients": [],
             "detected_allergens": [],
             "recommendation": "ไม่พบส่วนผสมในฉลาก",
             "ai_analysis": ""
         }
-
-    # 2. Normalize (ข้ามถ้าช้า)
-    print("🔄 กำลัง normalize ชื่อสาร...")
+    
+    print(f"✅ พบส่วนผสม {len(ingredients)} รายการ")
+    
+    # Normalize ชื่อสาร (แก้ไข OCR errors)
+    print("⏳ กำลัง normalize ชื่อสาร...")
     try:
         normalized_results = normalize_ingredients(ingredients)
-        normalized_ingredients = [
-            item["corrected"].upper()
-            for item in normalized_results
-            if item["corrected"] != "uncertain"
-        ]
+        
+        # เก็บเฉพาะสารที่ normalize สำเร็จ
+        normalized_ingredients = []
+        for item in normalized_results:
+            if item["corrected"] != "uncertain":
+                normalized_ingredients.append(item["corrected"].upper())
+            else:
+                # ถ้า AI ไม่แน่ใจ ใช้ชื่อเดิม
+                normalized_ingredients.append(item["original"].upper())
+        
+        print(f"✅ Normalize สำเร็จ {len(normalized_ingredients)} รายการ")
+        
+        # แสดง normalized ingredients
+        print("\n📋 รายการสารที่ตรวจพบ:")
+        for i, ing in enumerate(normalized_ingredients[:10], 1):
+            print(f"   {i}. {ing}")
+        if len(normalized_ingredients) > 10:
+            print(f"   ... และอีก {len(normalized_ingredients) - 10} รายการ")
+        
     except Exception as e:
         print(f"⚠️ Normalize ล้มเหลว: {e}")
-        # ใช้ชื่อดิบแทน
+        print("   → ใช้ชื่อดิบจาก OCR แทน")
         normalized_ingredients = [ing.upper() for ing in ingredients]
     
-    print(f"✅ พบ {len(normalized_ingredients)} รายการ")
-
-    # 3. ตรวจ allergen แบบ Exact + Partial matching
-    detected_exact = []
-    detected_partial = []
-    user_allergies_upper = [u.upper() for u in user_allergies]
-
-    for ing in normalized_ingredients:
-        for allergy in user_allergies_upper:
-            # Exact Match - ตรงทุกตัวอักษร
-            if allergy == ing:
-                detected_exact.append({
-                    "ingredient": ing,
-                    "matched_allergen": allergy,
-                    "reason": f"ตรงกับ '{allergy}' ทุกตัวอักษร",
-                    "level": "HIGH",
-                    "confidence": "แน่นอน",
-                    "source": "exact_match"
-                })
-                break
-            # Partial Match - ต้องให้ AI ตรวจสอบ
-            elif allergy in ing:
-                detected_partial.append({
-                    "ingredient": ing,
-                    "matched_allergen": allergy,
-                    "reason": f"พบคำว่า '{allergy}' ในชื่อสาร",
-                    "level": "UNKNOWN",
-                    "confidence": "ต้องตรวจสอบ",
-                    "source": "partial_match"
-                })
-                break
-
-    # 4. ให้ AI วิเคราะห์
-    ai_output = ""
-    ai_confirmed = []
-    ai_cross_reactive = []
-    ai_false_positive = []
+    # =========================================================================
+    # 3️⃣ เปรียบเทียบกับสารที่ user แพ้ (Fuzzy Matching)
+    # =========================================================================
+    print("\n🔍 STEP 3: ค้นหาสารที่คุณแพ้...")
     
-    if user_allergies and (detected_exact or detected_partial):
-        try:
-            print("🤖 ให้ AI วิเคราะห์แบบครบถ้วน...")
-            
-            to_verify = detected_exact + detected_partial
-            
-            ai_result = process_with_ai(
-                normalized_ingredients, 
-                user_allergies, 
-                to_verify
-            )
-            ai_output = ai_result.get("raw_ai_output", "")
-            
-            # 🔥 DEBUG: แสดง AI output
-            print("\n" + "="*70)
-            print("🤖 AI RAW OUTPUT:")
-            print("="*70)
-            print(ai_output)
-            print("="*70 + "\n")
-            
-            # Parse AI output
-            print("🔍 กำลัง parse AI response...")
-            ai_confirmed, ai_cross_reactive, ai_false_positive = parse_ai_response(
-                ai_output, 
-                detected_partial
-            )
-            print(f"✅ Parse เสร็จ: confirmed={len(ai_confirmed)}, cross={len(ai_cross_reactive)}, false={len(ai_false_positive)}\n")
+    if not user_allergies:
+        print("ℹ️ ไม่มีข้อมูลสารที่แพ้")
+        return {
+            "status": "success",
+            "message": "ไม่มีข้อมูลสารที่แพ้",
+            "cleaned_ingredients": normalized_ingredients,
+            "detected_allergens": [],
+            "recommendation": "✅ ไม่มีข้อมูลสารที่แพ้ในระบบ",
+            "ai_analysis": ""
+        }
     
-        except Exception as e:
-            print(f"⚠️ AI Error: {e}")
-            ai_output = f"AI วิเคราะห์ไม่สำเร็จ: {str(e)}"
-
-    # 5. รวมผลลัพธ์
-    all_detected = []
+    print(f"🔴 สารที่คุณแพ้: {', '.join(user_allergies)}")
     
-    # เพิ่ม Exact Match
-    for item in detected_exact:
-        all_detected.append({
-            **item,
-            "category": "แพ้แน่นอน"
-        })
+    # ใช้ Fuzzy Matching เพื่อหาสารที่แพ้
+    matching_allergens = find_matching_allergens(user_allergies, normalized_ingredients)
     
-    # เพิ่ม AI Confirmed (จาก Partial)
-    for item in ai_confirmed:
-        if not any(d["ingredient"] == item["ingredient"] for d in detected_exact):
-            all_detected.append({
-                **item,
-                "category": "แพ้จริง (AI ยืนยัน)"
-            })
+    if not matching_allergens:
+        print("✅ ไม่พบสารที่คุณแพ้ในผลิตภัณฑ์นี้")
+        return {
+            "status": "success",
+            "message": "ปลอดภัย",
+            "cleaned_ingredients": normalized_ingredients,
+            "detected_allergens": [],
+            "recommendation": "✅ ปลอดภัยสำหรับคุณ - ไม่พบสารที่คุณแพ้",
+            "ai_analysis": ""
+        }
     
-    # เพิ่ม Cross-reactive
-    for item in ai_cross_reactive:
-        all_detected.append({
-            **item,
-            "category": "อาจแพ้ไขว้"
-        })
+    print(f"\n⚠️ พบสารที่คุณอาจแพ้: {len(matching_allergens)} รายการ")
+    for match in matching_allergens:
+        print(f"   🔴 {match['ingredient']} (ตรงกับ '{match['allergen']}' - {match['reason']})")
     
-    # เพิ่ม False Positive (สำหรับแสดงว่าไม่เกี่ยวข้อง)
-    for item in ai_false_positive:
-        all_detected.append({
-            **item,
-            "category": "ไม่เกี่ยวข้อง"
-        })
+    # =========================================================================
+    # 4️⃣ ให้ AI วิเคราะห์แต่ละสารที่แพ้
+    # =========================================================================
+    print("\n🧠 STEP 4: ให้ AI วิเคราะห์แต่ละสารที่แพ้...")
+    print("⏳ กำลังรอ AI วิเคราะห์ (อาจใช้เวลา 1-3 นาที)...\n")
     
-    # 6. สรุปผล
-    recommendation = ""
-    if all_detected:
-        high_risk = [d for d in all_detected 
-                    if d.get("level", "").upper() in ["HIGH", "MEDIUM"] 
-                    and d.get("category") != "ไม่เกี่ยวข้อง"]
+    try:
+        ai_analysis = analyze_each_allergen(
+            normalized_ingredients=normalized_ingredients,
+            matching_allergens=matching_allergens
+        )
         
-        if high_risk:
-            recommendation = f"🔴 พบสารที่แพ้ {len(high_risk)} รายการ - ควรหลีกเลี่ยง"
-        else:
-            recommendation = "✅ ปลอดภัยสำหรับคุณ"
-    else:
-        recommendation = "✅ ปลอดภัยสำหรับคุณ"
-
-    return {
-        "status": "success",
-        "cleaned_ingredients": normalized_ingredients,
-        "detected_allergens": all_detected,
-        "recommendation": recommendation,
-        "ai_analysis": ai_output
-    }
-
-
-def parse_ai_response(ai_output, partial_matches):
-    """แยก AI response เป็น 3 กลุ่ม: confirmed, cross-reactive, false-positive"""
-    
-    confirmed = []
-    cross_reactive = []
-    false_positive = []
-    
-    print(f"   📄 AI output length: {len(ai_output)} chars")
-    print(f"   📝 Partial matches to verify: {len(partial_matches)}")
-    
-    if not ai_output or len(ai_output) < 50:
-        print("   ⚠️ AI output ว่างหรือสั้นเกินไป!")
-        return confirmed, cross_reactive, false_positive
-    
-    # แยก sections
-    sections = ai_output.split("2️⃣")
-    print(f"   🔢 Sections found: {len(sections)}")
-    
-    # Section 1: สารที่แพ้โดยตรง
-    if len(sections) > 0:
-        direct_section = sections[0]
+        print("✅ AI วิเคราะห์เสร็จแล้ว!")
         
-        # ลอง pattern หลายแบบ
-        patterns = [
-            r'🔴\s+([A-Z\s\(\)\-\/]+?)\s+\(ตำแหน่ง\s+(\d+)/(\d+)\)',
-            r'🔴\s+([A-Z\s\(\)\-\/]+?)[\n\r]',
-        ]
+    except Exception as e:
+        print(f"❌ AI วิเคราะห์ล้มเหลว: {e}")
+        ai_analysis = {
+            "status": "error",
+            "raw_output": f"เกิดข้อผิดพลาด: {str(e)}",
+            "analyzed_allergens": []
+        }
+    
+    # =========================================================================
+    # 5️⃣ รวมผลลัพธ์และสรุป
+    # =========================================================================
+    print("\n📊 STEP 5: สรุปผลลัพธ์...")
+    
+    # สร้าง detected_allergens สำหรับแสดงผล
+    detected_allergens = []
+    
+    for match in matching_allergens:
+        # หาข้อมูลจาก AI analysis
+        ai_detail = next(
+            (a for a in ai_analysis.get("analyzed_allergens", []) 
+             if a.get("ingredient") == match["ingredient"]),
+            None
+        )
         
-        direct_matches = []
-        for i, pattern in enumerate(patterns):
-            direct_matches = re.findall(pattern, direct_section, re.MULTILINE)
-            if direct_matches:
-                print(f"   ✅ Pattern {i+1} matched! Found {len(direct_matches)} direct allergens")
-                break
-        
-        for match in direct_matches:
-            if isinstance(match, tuple) and len(match) >= 3:
-                ing_name = match[0].strip()
-                position = match[1]
-                total = match[2]
-            elif isinstance(match, tuple):
-                ing_name = match[0].strip()
-                position = "?"
-                total = "?"
-            else:
-                ing_name = match.strip()
-                position = "?"
-                total = "?"
-            
-            # ดึงระดับความเสี่ยง
-            pattern = rf'{re.escape(ing_name)}.*?ความเสี่ยง:\s+(\S+)'
-            risk_match = re.search(pattern, direct_section, re.DOTALL)
-            risk_level = risk_match.group(1).strip() if risk_match else "สูง"
-            
-            # แปลงภาษาไทยเป็นภาษาอังกฤษ
-            risk_map = {
-                "สูงมาก": "VERY_HIGH",
-                "สูง": "HIGH", 
-                "ปานกลาง": "MEDIUM",
-                "ต่ำ": "LOW",
-                "ต่ำมาก": "VERY_LOW"
-            }
-            risk_eng = risk_map.get(risk_level, risk_level.upper())
-            
-            confirmed.append({
-                "ingredient": ing_name,
-                "reason": f"AI ยืนยัน - เป็นสารที่แพ้ (ตำแหน่ง {position}/{total})",
-                "level": risk_eng,
-                "confidence": "สูง",
+        if ai_detail:
+            detected_allergens.append({
+                "ingredient": match["ingredient"],
+                "matched_allergen": match["allergen"],
+                "match_reason": match["reason"],
+                "risk_level": ai_detail.get("risk_level", "ไม่ทราบ"),
+                "symptoms": ai_detail.get("symptoms", "ไม่ทราบ"),
+                "recommendation": ai_detail.get("recommendation", "ควรระวัง"),
                 "source": "ai_confirmed"
             })
-    
-    # Section 2: Cross-reactivity
-    if len(sections) > 1:
-        cross_section = sections[1].split("3️⃣")[0] if "3️⃣" in sections[1] else sections[1]
-        
-        if "ไม่พบ" not in cross_section and "✅" not in cross_section:
-            cross_patterns = [
-                r'🟡\s+([A-Z\s\(\)\-\/]+?)\s+\(ตำแหน่ง\s+(\d+)/(\d+)\)',
-                r'🟡\s+([A-Z\s\(\)\-\/]+?)[\n\r]',
-            ]
-            
-            cross_matches = []
-            for i, pattern in enumerate(cross_patterns):
-                cross_matches = re.findall(pattern, cross_section, re.MULTILINE)
-                if cross_matches:
-                    print(f"   ✅ Cross-reactive pattern {i+1} matched! Found {len(cross_matches)} items")
-                    break
-            
-            for match in cross_matches:
-                if isinstance(match, tuple) and len(match) >= 3:
-                    ing_name = match[0].strip()
-                    position = match[1]
-                    total = match[2]
-                elif isinstance(match, tuple):
-                    ing_name = match[0].strip()
-                    position = "?"
-                    total = "?"
-                else:
-                    ing_name = match.strip()
-                    position = "?"
-                    total = "?"
-                
-                pattern = rf'{re.escape(ing_name)}.*?เหตุผล:\s+(.+?)(?:→|ความเสี่ยง|$)'
-                reason_match = re.search(pattern, cross_section, re.DOTALL)
-                reason = reason_match.group(1).strip() if reason_match else "อาจแพ้ไขว้"
-                
-                cross_reactive.append({
-                    "ingredient": ing_name,
-                    "reason": f"{reason} (ตำแหน่ง {position}/{total})",
-                    "level": "MEDIUM",
-                    "confidence": "ปานกลาง",
-                    "source": "ai_cross_reactive"
-                })
-    
-    # หา False Positives (Partial matches ที่ AI ไม่ได้ยืนยัน)
-    confirmed_names = {item["ingredient"] for item in confirmed}
-    cross_names = {item["ingredient"] for item in cross_reactive}
-    
-    for pm in partial_matches:
-        if pm["ingredient"] not in confirmed_names and pm["ingredient"] not in cross_names:
-            false_positive.append({
-                "ingredient": pm["ingredient"],
-                "reason": f"AI ตรวจสอบแล้ว - ไม่เกี่ยวกับ '{pm['matched_allergen']}'",
-                "level": "SAFE",
-                "confidence": "AI ยืนยัน",
-                "source": "ai_false_positive"
+        else:
+            # ถ้า AI ไม่ได้วิเคราะห์ ให้ใช้ข้อมูลเบื้องต้น
+            detected_allergens.append({
+                "ingredient": match["ingredient"],
+                "matched_allergen": match["allergen"],
+                "match_reason": match["reason"],
+                "risk_level": "ต้องตรวจสอบ",
+                "symptoms": "ไม่ทราบ",
+                "recommendation": "ควรระวัง",
+                "source": "fuzzy_match_only"
             })
     
-    return confirmed, cross_reactive, false_positive
+    # สรุปความเสี่ยง
+    high_risk_count = sum(
+        1 for a in detected_allergens 
+        if "สูง" in a.get("risk_level", "").lower() or "high" in a.get("risk_level", "").lower()
+    )
+    
+    if high_risk_count > 0:
+        recommendation = f"🔴 ไม่ควรใช้ - พบสารที่คุณแพ้ {len(detected_allergens)} รายการ ({high_risk_count} รายการเสี่ยงสูง)"
+    elif len(detected_allergens) > 0:
+        recommendation = f"⚠️ ใช้ด้วยความระวัง - พบสารที่อาจทำให้แพ้ {len(detected_allergens)} รายการ"
+    else:
+        recommendation = "✅ ปลอดภัยสำหรับคุณ"
+    
+    print(f"\n{recommendation}")
+    print("="*70 + "\n")
+    
+    return {
+        "status": "success",
+        "message": "วิเคราะห์สำเร็จ",
+        "cleaned_ingredients": normalized_ingredients,
+        "detected_allergens": detected_allergens,
+        "recommendation": recommendation,
+        "ai_analysis": ai_analysis.get("raw_output", "")
+    }
