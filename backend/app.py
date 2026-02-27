@@ -217,7 +217,7 @@ def convert_to_frontend_format(pipeline_result):
     # สร้าง summary
     summary = pipeline_result.get("recommendation", "")
     if pipeline_result.get("ai_analysis"):
-        summary += "\n\n" + pipeline_result["ai_analysis"][:500]  # เอา 500 ตัวอักษรแรก
+        summary += "\n\n" + pipeline_result["ai_analysis"]
     
     return {
         "ingredients": ingredients,

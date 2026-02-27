@@ -97,7 +97,7 @@ def fuzzy_match(user_allergen, ingredient_name, threshold=0.75):
     
     # กรองคำทั่วไปที่ไม่ควรใช้จับคู่ (ACID, GLYCOL, EXTRACT, OIL, WATER, etc.)
     COMMON_WORDS = {'ACID', 'GLYCOL', 'EXTRACT', 'OIL', 'WATER', 'AQUA', 'BUTTER', 
-                    'OXIDE', 'CHLORIDE', 'SULFATE', 'ACETATE', 'ALCOHOL'}
+                    'OXIDE', 'CHLORIDE', 'SULFATE', 'ACETATE'}
     
     # กรองคำทั่วไปออก
     allergen_specific = [w for w in allergen_words if w not in COMMON_WORDS]
@@ -154,35 +154,28 @@ def fuzzy_match(user_allergen, ingredient_name, threshold=0.75):
 
 
 def find_matching_allergens(user_allergies, normalized_ingredients):
-    """
-    หาสารที่ user แพ้จาก list ส่วนผสม
-    
-    Args:
-        user_allergies: list ของชื่อสารที่ user แพ้
-        normalized_ingredients: list ของชื่อสารจาก OCR (normalize แล้ว)
-    
-    Returns:
-        list: [{"allergen": str, "ingredient": str, "match_score": float, "reason": str}]
-    """
-    
     matches = []
+    matched_ingredients = set()  # เพิ่มตรงนี้
     
     for allergen in user_allergies:
         for ingredient in normalized_ingredients:
-            result = fuzzy_match(allergen, ingredient, threshold=0.75)
+            result = fuzzy_match(allergen, ingredient, threshold=0.85)
             
             if result["match"]:
+                # ถ้าสารนี้ถูก match ไปแล้ว ข้ามได้เลย
+                if ingredient in matched_ingredients:
+                    continue
+                    
+                matched_ingredients.add(ingredient)  # เพิ่มตรงนี้
                 matches.append({
-                    "allergen": allergen,  # ชื่อที่ user พิมพ์
-                    "ingredient": ingredient,  # ชื่อจริงในผลิตภัณฑ์
+                    "allergen": allergen,
+                    "ingredient": ingredient,
                     "match_score": result["score"],
                     "reason": result["reason"]
                 })
-                
                 print(f"✅ Match: '{allergen}' → '{ingredient}' ({result['reason']})")
     
     return matches
-
 
 # ทดสอบ
 if __name__ == "__main__":

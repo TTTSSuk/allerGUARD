@@ -157,23 +157,21 @@ def run_pipeline(image_path, user_allergies=None):
     detected_allergens = []
     
     for match in matching_allergens:
-        # หาข้อมูลจาก AI analysis
         ai_detail = next(
             (a for a in ai_analysis.get("analyzed_allergens", []) 
-             if a.get("ingredient") == match["ingredient"]),
+            if match["ingredient"].upper() in a.get("ingredient", "").upper() or 
+                a.get("ingredient", "").upper() in match["ingredient"].upper()),
             None
-        )
-        
+    )
         if ai_detail:
             detected_allergens.append({
-                "ingredient": match["ingredient"],
-                "matched_allergen": match["allergen"],
-                "match_reason": match["reason"],
-                "risk_level": ai_detail.get("risk_level", "ไม่ทราบ"),
-                "symptoms": ai_detail.get("symptoms", "ไม่ทราบ"),
-                "recommendation": ai_detail.get("recommendation", "ควรระวัง"),
-                "source": "ai_confirmed"
-            })
+    "ingredient": match["ingredient"],
+    "matched_allergen": match["allergen"],
+    "match_reason": match["reason"],
+    "description": ai_detail.get("description", "ไม่ทราบ"),  # เปลี่ยนจาก symptoms
+    "alternatives": ai_detail.get("alternatives", []),
+    "source": "ai_confirmed"
+})
         else:
             # ถ้า AI ไม่ได้วิเคราะห์ ให้ใช้ข้อมูลเบื้องต้น
             detected_allergens.append({
